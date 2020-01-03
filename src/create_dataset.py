@@ -1,17 +1,22 @@
 import argparse
-from os.path import join
 from os import listdir, makedirs
+from os.path import join
 from shutil import rmtree, copy
-from tqdm import tqdm
-import cv2
+
 import albumentations as A
+import cv2
+from tqdm import tqdm
+
+from .constants import DEFAULT_DATA_PATH, DATASET_PATH
+
 
 
 def create_argument_parser():
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--input_path', type=str, default='../data/default/', help='')
-    parser.add_argument('--output_path', type=str, default='../data/dataset/', help='')
+    parser.add_argument('--input_path', type=str, default=DEFAULT_DATA_PATH, help='')
+    parser.add_argument('--output_path', type=str, default=DATASET_PATH, help='')
     return parser
+
 
 def augmentation(image):
     height, width = image.shape[:2]
@@ -61,29 +66,29 @@ def augmentation(image):
 
 
 def main(args):
-    input_path = args.input_path
-    output_path = args.output_path
+    INPUT_PATH = args.input_path
+    OUTPUT_PATH = args.output_path
 
     # create folders
-    rmtree(output_path, ignore_errors=True)
+    rmtree(OUTPUT_PATH, ignore_errors=True)
     for folder in ['train', 'val']:
         for sub_folder in ['cleaned', 'dirty']:
-            makedirs(join(output_path, folder, sub_folder))
+            makedirs(join(OUTPUT_PATH, folder, sub_folder))
 
     # split data
     for folder in ['cleaned', 'dirty']:
-        source_folder = join(input_path, 'train', folder)
+        source_folder = join(INPUT_PATH, 'train', folder)
         images = listdir(source_folder)
         for i, image in enumerate(images):
             if i % 6 != 0:
-                dest_folder = join(output_path, 'train', folder)
+                dest_folder = join(OUTPUT_PATH, 'train', folder)
             else:
-                dest_folder = join(output_path, 'val', folder)
+                dest_folder = join(OUTPUT_PATH, 'val', folder)
             copy(join(source_folder, image), (join(dest_folder, image)))
 
     # add augmentations
     for folder in ['cleaned', 'dirty']:
-        folder_path = join(output_path, 'train', folder)
+        folder_path = join(OUTPUT_PATH, 'train', folder)
         images = listdir(folder_path)
         for i, name in tqdm(enumerate(images)):
             image_path = join(folder_path, name)
@@ -94,7 +99,6 @@ def main(args):
             name = '{}_{}_{}'.format(i, folder, name)
             save_path = join(folder_path, name)
             cv2.imwrite(save_path, image)
-
 
     pass
 
